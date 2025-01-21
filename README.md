@@ -152,11 +152,10 @@ func testUserDetailNavigation() {
 
 ## Screenshots
 
-### User List Screen
-![User List](https://github.com/user-attachments/assets/d689c566-5c3c-446d-b3b0-20ba0d4663ac)
-
-### User Detail Screen
-![User Detail](https://github.com/user-attachments/assets/f6503629-30b6-4f1b-afcb-ea9507fa0e6a)
+<div style="display: flex; justify-content: space-around;">
+    <img src="https://github.com/user-attachments/assets/d689c566-5c3c-446d-b3b0-20ba0d4663ac" alt="User List Screen" width="45%"/>
+    <img src="https://github.com/user-attachments/assets/f6503629-30b6-4f1b-afcb-ea9507fa0e6a" alt="User Detail Screen" width="45%"/>
+</div>
 
 ---
 

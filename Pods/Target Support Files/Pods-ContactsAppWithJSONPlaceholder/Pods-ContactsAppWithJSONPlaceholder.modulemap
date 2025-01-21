@@ -1,0 +1,6 @@
+framework module Pods_ContactsAppWithJSONPlaceholder {
+  umbrella header "Pods-ContactsAppWithJSONPlaceholder-umbrella.h"
+
+  export *
+  module * { export * }
+}

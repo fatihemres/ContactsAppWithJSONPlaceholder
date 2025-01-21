@@ -7,25 +7,36 @@
 
 import XCTest
 
+/// UI tests to verify the launch behavior of the Contacts App, ensuring key elements are present and the app launches correctly.
 final class ContactsAppWithJSONPlaceholderUITestsLaunchTests: XCTestCase {
 
+    /// Ensures the test runs for each target application configuration.
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
     }
 
     override func setUpWithError() throws {
+        // Prevent tests from continuing after a failure.
         continueAfterFailure = false
     }
 
-    @MainActor
+    /// Tests that the app launches correctly and verifies essential UI elements are present.
     func testLaunch() throws {
+        // Launch the app.
         let app = XCUIApplication()
         app.launch()
 
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
+        // Verify that the search bar is present on launch.
+        let searchBar = app.searchFields["Search users"]
+        XCTAssertTrue(searchBar.exists, "Search bar should exist on launch.")
 
-        let attachment = XCTAttachment(screenshot: app.screenshot())
+        // Verify that at least one cell exists in the table view at launch.
+        let firstCell = app.tables.cells.element(boundBy: 0)
+        XCTAssertTrue(firstCell.exists, "At least one cell should exist in the table view at launch.")
+
+        // Capture a screenshot of the launch screen.
+        let screenshot = app.screenshot()
+        let attachment = XCTAttachment(screenshot: screenshot)
         attachment.name = "Launch Screen"
         attachment.lifetime = .keepAlways
         add(attachment)

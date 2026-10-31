@@ -1,0 +1,106 @@
+name: iOS cloud validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ContactsAppWithJSONPlaceholder/**'
+      - 'ContactsAppWithJSONPlaceholderTests/**'
+      - 'ContactsAppWithJSONPlaceholderUITests/**'
+      - 'ContactsAppWithJSONPlaceholder.xcodeproj/**'
+      - 'ContactsAppWithJSONPlaceholder.xcworkspace/**'
+      - 'Podfile'
+      - 'Podfile.lock'
+      - 'Pods/**'
+      - '.github/workflows/ios-cloud-validation.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-cloud-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Xcode 16.4 / simulator unit tests
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Select installed Xcode 16.4
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -version
+          xcodebuild -showsdks
+
+      - name: Verify committed CocoaPods lockfiles
+        run: |
+          test -f Pods/Pods.xcodeproj/project.pbxproj
+          cmp Podfile.lock Pods/Manifest.lock
+          echo "Checked-in CocoaPods manifest agrees with Podfile.lock"
+
+      - name: Verify shared Xcode scheme
+        run: |
+          xcodebuild -list -workspace ContactsAppWithJSONPlaceholder.xcworkspace
+
+      - name: Choose a preinstalled iOS 18.5 simulator
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+
+          result = subprocess.run(
+              ["xcrun", "simctl", "list", "devices", "available", "--json"],
+              capture_output=True, text=True, check=True,
+          )
+          devices = json.loads(result.stdout)["devices"]
+          matches = [
+              device for key, entries in devices.items()
+              if key.endswith("iOS-18-5")
+              for device in entries
+              if device.get("isAvailable")
+          ]
+          if not matches:
+              raise SystemExit(
+                  "iOS 18.5 simulator unavailable on this macos-15 image; "
+                  "inspect xcrun simctl list devices before changing CI."
+              )
+          preferred = next(
+              (d for d in matches if d["name"].startswith("iPhone")), matches[0]
+          )
+          print(f"Selected {preferred['name']} ({preferred['udid']})")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              env.write(f"IOS_SIMULATOR_ID={preferred['udid']}\n")
+          PY
+
+      - name: Build app and run XCTest unit target
+        shell: bash
+        run: |
+          xcodebuild test \
+            -workspace ContactsAppWithJSONPlaceholder.xcworkspace \
+            -scheme ContactsAppWithJSONPlaceholder \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=${IOS_SIMULATOR_ID}" \
+            -parallel-testing-enabled NO \
+            -only-testing:ContactsAppWithJSONPlaceholderTests \
+            -resultBundlePath "${RUNNER_TEMP}/ContactsUnitTests.xcresult" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Attach XCTest result bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-unit-tests-xcresult
+          path: ${{ runner.temp }}/ContactsUnitTests.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
+
+# UI tests intentionally not run here: they rely on live JSONPlaceholder data.
+# A green job verifies simulator build and XCTest unit suite, not real-device UX.

@@ -59,7 +59,7 @@ flowchart TD
 ### Demonstration scope
 
 - The list fetches users from JSONPlaceholder. Selecting a row passes the existing `User` object through the detail coordinator; the detail screen does **not** issue a second user-detail API request.
-- `UserDetailViewModel.loadUserDetails()` currently uses a short delay and a random success/error result to demonstrate UI states. That outcome is **simulated**, not a real remote error response.
+- `UserDetailViewModel.loadUserDetails()` reports `.success` for the already-selected `User` without an artificial delay or random failure. The detail view does not perform another API fetch.
 - This repository serves as an iOS architecture and interface portfolio sample. It is not presented as a production contacts service.
 
 ---

@@ -37,7 +37,7 @@ jobs:
   unit-tests:
     name: Xcode 16.4 / simulator unit tests
     runs-on: macos-15
-    timeout-minutes: 35
+    timeout-minutes: 55
     steps:
       - name: Check out candidate
         uses: actions/checkout@v4
@@ -105,6 +105,19 @@ jobs:
             -resultBundlePath "${RUNNER_TEMP}/ContactsUnitTests.xcresult" \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Run deterministic UI tests on iOS Simulator
+        shell: bash
+        run: |
+          xcodebuild test \
+            -workspace ContactsAppWithJSONPlaceholder.xcworkspace \
+            -scheme ContactsAppWithJSONPlaceholder \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=${IOS_SIMULATOR_ID}" \
+            -parallel-testing-enabled NO \
+            -only-testing:ContactsAppWithJSONPlaceholderUITests \
+            -resultBundlePath "${RUNNER_TEMP}/ContactsUITests.xcresult" \
+            CODE_SIGNING_ALLOWED=NO
+
       - name: Attach XCTest result bundle
         if: always()
         uses: actions/upload-artifact@v4
@@ -114,5 +127,14 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-# UI tests intentionally not run here: they rely on live JSONPlaceholder data.
-# A green job verifies simulator build and XCTest unit suite, not real-device UX.
+      - name: Attach UI test result bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ui-tests-xcresult
+          path: ${{ runner.temp }}/ContactsUITests.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
+
+# Only fixture-driven UI tests run in CI; normal app launches still use the API.
+# A green job does not verify physical iPhone behavior or distribution signing.

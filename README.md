@@ -26,28 +26,61 @@ ContactsAppWithJSONPlaceholder is an iOS application demonstrating the use of mo
 ### Architecture
 The app follows the **Coordinator Pattern** for navigation, ensuring a modular and testable structure. This approach centralizes navigation logic, making it easier to manage transitions between screens and maintain a clean separation of concerns. It also employs a **ViewModel** layer to separate business logic from the view.
 
+### Architecture at a glance
+
+```mermaid
+flowchart TD
+    A["SceneDelegate / UINavigationController"] --> B["BaseCoordinator"]
+    B --> C["UserListViewCoordinator"]
+    C --> D["UserListBuilder / UserListViewController"]
+    D <--> E["UsersListViewModel"]
+    E --> F["UserRepositoryProtocol"]
+    F --> G["UserRepository"]
+    G --> H["NetworkRequest + URLSession"]
+    H --> I["JSONPlaceholder /users"]
+    C -->|"selected User"| J["UserDetailViewCoordinator"]
+    J --> K["UserDetailBuilder / UserDetailViewController"]
+    K <--> L["UserDetailViewModel"]
+    E -->|"loading / success / empty / error"| D
+```
+
+### Engineering decisions
+
+| Decision | Reason and implementation |
+| --- | --- |
+| **Coordinator-based navigation** | `SceneDelegate` starts `BaseCoordinator`, which delegates list and detail flows to separate coordinators. Navigation is not owned by the ViewModels. |
+| **MVVM with explicit UI states** | The list ViewModel manages fetching and case-insensitive name filtering; callback states let the controller render loading, success, empty, or error feedback. |
+| **Protocol-oriented repository** | `UserRepositoryProtocol` decouples the list ViewModel from `UserRepository` and lets XCTest inject `MockUserRepository` for success/failure scenarios. |
+| **Dedicated network boundary** | `EndPoint` builds the JSONPlaceholder `/users` URL; `NetworkRequest` wraps `URLSession`, dispatches completion to the main queue, and `UserRepository` decodes `[User]`. |
+| **Programmatic UIKit** | List/detail screens are constructed in Swift; **SnapKit** expresses Auto Layout constraints and **Then** keeps view configuration concise. |
+| **SwiftUI inside UIKit** | A custom animated `LoadingIndicator` is hosted by `UIHostingController` via `LoadingIndicatorView`, demonstrating incremental UIKit/SwiftUI interoperability. |
+| **Test automation** | XCTest covers ViewModel/repository behavior and UI interactions. GitHub Actions runs iOS Simulator builds and the **unit-test target** on hosted macOS; the live-API-dependent UI tests are not yet part of that CI gate. |
+
+### Demonstration scope
+
+- The list fetches users from JSONPlaceholder. Selecting a row passes the existing `User` object through the detail coordinator; the detail screen does **not** issue a second user-detail API request.
+- `UserDetailViewModel.loadUserDetails()` reports `.success` for the already-selected `User` without an artificial delay or random failure. The detail view does not perform another API fetch.
+- This repository serves as an iOS architecture and interface portfolio sample. It is not presented as a production contacts service.
+
 ---
 
 ## Project Structure
+```text
+ContactsAppWithJSONPlaceholder/            # UIKit application target
+  AppConfig/                                # App/scene startup
+  Coordinator/                              # Navigation protocols
+  Models/                                   # Codable API models
+  Network/Repository/                       # Repository and protocol
+  Network/Service/                          # Endpoint and HTTP layer
+  Screens/                                  # List, details, base controllers
+  UIComponents/                             # Cells and SwiftUI loading UI
+  ViewModels/                               # List and detail state
+  Extensions/                               # Shared UIKit/URLSession helpers
+  Utils/                                    # Builders, types and protocols
+ContactsAppWithJSONPlaceholderTests/       # Mocks and XCTest unit tests
+ContactsAppWithJSONPlaceholderUITests/     # XCTest UI tests
+Podfile                                     # Third-party dependencies
 ```
-ContactsAppWithJSONPlaceholder/
-├── MainProject/
-│   ├── AppConfig/           # Application configuration files
-│   ├── Coordinator/         # Coordinator classes for navigation
-│   ├── Extensions/          # Extensions for utilities and reusability
-│   ├── Models/              # Data models (User, Address, Geo, Company)
-│   ├── Network/             # Networking classes (EndPoint, UserRepository)
-│   ├── Resources/           # Assets and configurations
-│   ├── Screens/             # UIKit screens (User List, User Details)
-│   ├── UIComponents/        # Reusable UI components
-│   ├── Utils/               # General utility classes and helpers
-│   ├── ViewModels/          # ViewModel classes for business logic
-├── UnitTests/
-│   ├── Mocks/               # Mock data and repositories for testing
-│   ├── Tests/               # Unit test cases
-├── UITests/                 # UI test cases
-```
-
 ---
 
 ## Frameworks & Libraries
@@ -132,8 +165,8 @@ func testUserDetailNavigation() {
 ## Installation
 
 ### Requirements
-- **Xcode 14.0+**
-- **iOS 15.0+**
+- **Xcode with iOS 18.2 SDK support:** The checked-in `.xcodeproj` specifies `IPHONEOS_DEPLOYMENT_TARGET = 18.2`.
+- **iOS 18.2+** for the current project target. The `Podfile` separately specifies `platform :ios, '14.0'`; these settings are not aligned and should be reviewed before claiming compatibility with older iOS versions.
 
 ### Steps
 1. Clone the repository:

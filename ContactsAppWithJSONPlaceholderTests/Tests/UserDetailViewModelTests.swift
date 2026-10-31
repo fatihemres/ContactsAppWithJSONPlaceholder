@@ -33,25 +33,26 @@ final class UserDetailViewModelTests: XCTestCase {
         XCTAssertEqual(user.name, expectedName, "The user's name should match the mock user's name.")
     }
 
-    /// Tests that the view model correctly transitions to the `.success` state.
-    func testUserDetailsStateSuccess() {
-        // Arrange
-        let expectation = self.expectation(description: "Success state called")
-        
+    /// Opening a selected user must emit exactly one success, with no fake
+    /// loading state or random error.
+    func testLoadUserDetailsPresentsSelectedUserDeterministically() {
+        var successCount = 0
+
         viewModel.stateChangeHandler = { state in
             switch state {
             case .success:
-                expectation.fulfill() // Fulfill when success state is reached.
-            default:
-                XCTFail("Expected success state, got \(state)")
+                successCount += 1
+            case .loading:
+                XCTFail("No additional user-detail fetch should be performed.")
+            case .error(let message):
+                XCTFail("Unexpected detail presentation error: \(message)")
             }
         }
 
-        // Act
-        viewModel.stateChangeHandler?(.success)
+        viewModel.loadUserDetails()
 
-        // Assert
-        waitForExpectations(timeout: 1.0)
+        XCTAssertEqual(successCount, 1, "The selected user should be ready immediately.")
+        XCTAssertEqual(viewModel.getUser().id, MockUser.sample.id)
     }
 
     /// Tests that the view model correctly transitions to the `.error` state with the appropriate message.

@@ -54,7 +54,7 @@ flowchart TD
 | **Dedicated network boundary** | `EndPoint` builds the JSONPlaceholder `/users` URL; `NetworkRequest` wraps `URLSession`, dispatches completion to the main queue, and `UserRepository` decodes `[User]`. |
 | **Programmatic UIKit** | List/detail screens are constructed in Swift; **SnapKit** expresses Auto Layout constraints and **Then** keeps view configuration concise. |
 | **SwiftUI inside UIKit** | A custom animated `LoadingIndicator` is hosted by `UIHostingController` via `LoadingIndicatorView`, demonstrating incremental UIKit/SwiftUI interoperability. |
-| **Unit and UI tests** | XCTest test targets include ViewModel/repository tests and UI interaction checks; their presence does not imply a current automated CI or a verified latest build. |
+| **Test automation** | XCTest covers ViewModel/repository behavior and UI interactions. GitHub Actions runs iOS Simulator builds and the **unit-test target** on hosted macOS; the live-API-dependent UI tests are not yet part of that CI gate. |
 
 ### Demonstration scope
 

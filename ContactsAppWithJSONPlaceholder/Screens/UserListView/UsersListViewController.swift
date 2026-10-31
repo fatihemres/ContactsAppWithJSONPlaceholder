@@ -23,8 +23,17 @@ final class UserListBuilder: NSObject {
     /// Builds and returns an instance of `UserListViewController`.
     /// - Returns: A fully initialized `UserListViewController`.
     func build() -> UIViewController {
-        let viewController = UserListViewController(coordinator: coordinator)
-        return viewController
+        // Resolve the repository at the composition boundary, not inside the ViewModel.
+        // Only a DEBUG build launched explicitly by UI tests uses in-memory users.
+        #if DEBUG
+        let repository: UserRepositoryProtocol = ProcessInfo.processInfo.arguments.contains("-ui-test-fixtures")
+            ? UITestFixtureUserRepository()
+            : UserRepository()
+        #else
+        let repository: UserRepositoryProtocol = UserRepository()
+        #endif
+
+        return UserListViewController(coordinator: coordinator, userRepository: repository)
     }
 }
 
@@ -61,9 +70,9 @@ final class UserListViewController: BaseViewController {
     // MARK: - Initialization
     /// Initializes the view controller with its coordinator and sets up the view model.
     /// - Parameter coordinator: The coordinator for handling navigation from this view.
-    init(coordinator: UserListViewCoordinator) {
+    init(coordinator: UserListViewCoordinator, userRepository: UserRepositoryProtocol = UserRepository()) {
         self.coordinator = coordinator
-        self.viewModel = UsersListViewModel()
+        self.viewModel = UsersListViewModel(userRepository: userRepository)
         super.init()
     }
     

@@ -38,6 +38,16 @@
                ReferencedContainer = "container:ContactsAppWithJSONPlaceholder.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BA8823602D3E12880039E455"
+               BuildableName = "ContactsAppWithJSONPlaceholderUITests.xctest"
+               BlueprintName = "ContactsAppWithJSONPlaceholderUITests"
+               ReferencedContainer = "container:ContactsAppWithJSONPlaceholder.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

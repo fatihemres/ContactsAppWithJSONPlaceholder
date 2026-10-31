@@ -1,0 +1,20 @@
+# Xcode per-developer settings (do not ignore shared project schemes)
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+
+# Generated builds and local tooling output
+DerivedData/
+build/
+.build/
+*.hmap
+*.ipa
+*.dSYM
+*.dSYM.zip
+.DS_Store
+
+# CocoaPods policy: keep Podfile, Podfile.lock, Pods/, and the
+# committed .xcworkspace in source control for this repository.
+# Do not ignore Pods/ without a separate owner-approved migration.

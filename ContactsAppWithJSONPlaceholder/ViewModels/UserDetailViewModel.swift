@@ -24,22 +24,11 @@ final class UserDetailViewModel: ViewModel {
     }
 
     // MARK: - Public Methods
-    /// Simulates loading user details by triggering a state change after a delay.
-    /// A random success or failure result is used to mimic network behavior.
+    /// Presents the already-selected user without a second network request.
+    /// The list flow passes a complete User value to this ViewModel, so
+    /// detail presentation must not randomly fail or simulate fetching.
     func loadUserDetails() {
-        stateChangeHandler?(.loading) // Notify the view that data is being loaded.
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-
-            let isSuccess = Bool.random() // Randomly determine success or failure.
-            if isSuccess {
-                self.stateChangeHandler?(.success) // Notify the view of success.
-            } else {
-                self.stateChangeHandler?(.error("Failed to fetch user details. Please try again later."))
-                // Notify the view of an error with a descriptive message.
-            }
-        }
+        stateChangeHandler?(.success)
     }
 
     /// Provides the user object to the view.
